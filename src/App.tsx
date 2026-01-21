@@ -143,7 +143,7 @@ const EditorUI = ({ settings, setSettings, onSavePreset }) => {
         </div>
 
         {/* SIDEBAR */}
-        <div className="w-full md:w-[320px] h-[40vh] md:h-full bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] md:shadow-xl border-t md:border-t-0 md:border-l border-zinc-800 z-20 flex-shrink-0 order-2 overflow-hidden">
+        <div className="w-full md:w-[420px] h-[40vh] md:h-full bg-zinc-900 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] md:shadow-xl border-t md:border-t-0 md:border-l border-zinc-800 z-20 flex-shrink-0 order-2 overflow-hidden">
              <Controls 
                 settings={settings} 
                 setSettings={setSettings} 

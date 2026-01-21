@@ -8,7 +8,7 @@ const GlowMaterialImpl = shaderMaterial(
     uSize: new THREE.Vector2(1.0, 1.0),
     uIntensity: 0.5,
     uGain: 2.0,
-    uContrast: 1.0, // NOVO
+    uContrast: 1.0,
     uDistortionStr: 0.0,
     uFrequency: 3.0,
     uShapeMode: 0, 
@@ -25,6 +25,9 @@ const GlowMaterialImpl = shaderMaterial(
     // Translação/Escala
     uPosition: new THREE.Vector2(0, 0),
     uScale: new THREE.Vector2(1, 1),
+    
+    // Alcance/Máscara
+    uFalloff: 1.0,
   },
   // Vertex Shader
   `
@@ -67,7 +70,7 @@ const GlowMaterialImpl = shaderMaterial(
     uniform vec2 uSize;
     uniform float uIntensity;
     uniform float uGain;
-    uniform float uContrast; // NOVO
+    uniform float uContrast; 
     uniform float uDistortionStr;
     uniform float uFrequency;
     uniform int uShapeMode;
@@ -83,6 +86,7 @@ const GlowMaterialImpl = shaderMaterial(
     
     uniform vec2 uPosition;
     uniform vec2 uScale;
+    uniform float uFalloff;
 
     varying vec2 vUv;
 
@@ -102,16 +106,12 @@ const GlowMaterialImpl = shaderMaterial(
       
       vec2 centeredUV = uv - 0.5 - uPosition;
 
-      // Twist
       float angle = atan(centeredUV.y, centeredUV.x);
       float len = length(centeredUV);
       angle += uTwist; 
       vec2 twistedUV = vec2(cos(angle) * len, sin(angle) * len);
-      
-      // Scale
       vec2 stretchedUv = vec2(twistedUV.x / uScale.x, twistedUV.y / uScale.y);
 
-      // Noise
       float noiseVal = snoise(stretchedUv * uFrequency + vec2(uSeed + uTime * 0.2, uSeed - uTime * 0.1));
       vec2 distortedUv = stretchedUv + (noiseVal * uDistortionStr * 0.15);
 
@@ -119,7 +119,6 @@ const GlowMaterialImpl = shaderMaterial(
       float phi = atan(distortedUv.y, distortedUv.x); 
       float brightness = 0.0;
 
-      // --- SHAPES ---
       if (uShapeMode == 0) { // Center
           brightness = pow(0.02 / max(dist, 0.001), 1.2 / max(uIntensity, 0.01));
       } else if (uShapeMode == 1) { // Ring
@@ -143,19 +142,25 @@ const GlowMaterialImpl = shaderMaterial(
           brightness += fill * uIntensity * 0.5;
       }
 
-      // Edge mask
-      brightness *= smoothstep(0.8, 0.5, dist);
-      
-      // --- BRIGHTNESS & CONTRAST ---
-      // Apply Gain
-      brightness *= uGain;
-      // Apply Contrast (Power function)
-      brightness = pow(brightness, uContrast);
+      // Máscara de Falloff Suave (Distância real)
+      float rawDist = length(uv - 0.5 - uPosition);
+      float mask = smoothstep(uFalloff, uFalloff * 0.5, rawDist * 2.0); 
+      brightness *= mask;
 
+      // Pós-Processamento
+      brightness *= uGain;
+      brightness = pow(brightness, uContrast);
       brightness = clamp(brightness, 0.0, 1.0);
+      
+      // --- CORTE FINAL DE LUZ FRACA ---
+      // Se o brilho for menor que 1% (0.01), apaga totalmente (transparente)
+      if (brightness < 0.01) {
+          brightness = 0.0;
+      }
+
       vec3 finalColor = uColor * brightness;
       
-      // Grid
+      // Grid Visualizer
       if (uShowGrid > 0.5 && uPixelCount > 0.0 && uPixelCount < 600.0) {
           vec2 gridUV = vUv * uPixelCount;
           vec2 grid = step(0.95, fract(gridUV)) + step(0.05, 1.0 - fract(gridUV));

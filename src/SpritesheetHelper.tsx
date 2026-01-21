@@ -21,7 +21,8 @@ function restoreRendererState(gl, camera, state) {
     camera.updateProjectionMatrix();
 }
 
-export async function downloadSingleFrame(gl, scene, camera, materialRef, pixelCount) {
+// ATUALIZADO: Aceita customName
+export async function downloadSingleFrame(gl, scene, camera, materialRef, pixelCount, customName = "") {
     if (!gl || !materialRef.current) return;
     
     const targetSize = pixelCount > 0 ? pixelCount : 1024;
@@ -40,7 +41,11 @@ export async function downloadSingleFrame(gl, scene, camera, materialRef, pixelC
 
         const dataURL = gl.domElement.toDataURL('image/png');
         const link = document.createElement('a');
-        link.download = `vfx-glow-${targetSize}px-${Date.now()}.png`;
+        
+        // Lógica de Nome
+        const cleanName = customName.trim() || `vfx-glow`;
+        link.download = `${cleanName}-${targetSize}px-${Date.now()}.png`;
+        
         link.href = dataURL;
         link.click();
     } finally {
@@ -48,7 +53,8 @@ export async function downloadSingleFrame(gl, scene, camera, materialRef, pixelC
     }
 }
 
-export async function generateStripSpritesheet(gl, scene, camera, materialRef, spriteList) {
+// ATUALIZADO: Aceita customName
+export async function generateStripSpritesheet(gl, scene, camera, materialRef, spriteList, customName = "") {
     if (spriteList.length === 0 || !materialRef.current) return;
 
     const firstSettings = spriteList[0];
@@ -57,13 +63,11 @@ export async function generateStripSpritesheet(gl, scene, camera, materialRef, s
     const height = Math.round(targetSize);
     const totalFrames = spriteList.length;
 
-    // Canvas 2D Vertical
     const sheetCanvas = document.createElement('canvas');
     sheetCanvas.width = width;
     sheetCanvas.height = height * totalFrames;
     const ctx = sheetCanvas.getContext('2d');
     
-    // Desativa suavização para pixel art perfeito
     ctx.imageSmoothingEnabled = false; 
 
     const state = saveRendererState(gl, camera);
@@ -74,15 +78,19 @@ export async function generateStripSpritesheet(gl, scene, camera, materialRef, s
         for (let i = 0; i < totalFrames; i++) {
             const settings = spriteList[i];
 
-            // 1. Aplica Uniformes
+            const scale = settings.scale !== undefined ? settings.scale : 1.0;
+            const sizeX = settings.sizeX !== undefined ? settings.sizeX : 1.0;
+            const sizeY = settings.sizeY !== undefined ? settings.sizeY : 1.0;
+
             mat.uTime = 1.0; 
             mat.uPixelCount = settings.pixelCount;
             mat.uShowGrid = 0.0;
-            mat.uPosition.set(settings.posX, settings.posY);
-            mat.uScale.set(settings.sizeX * settings.scale, settings.sizeY * settings.scale);
+            mat.uPosition.set(settings.posX || 0, settings.posY || 0);
+            mat.uScale.set(sizeX * scale * 1.3, sizeY * scale * 1.3);
+            
             mat.uIntensity = settings.intensity;
             mat.uGain = settings.gain;
-            mat.uContrast = settings.contrast;
+            mat.uContrast = settings.contrast !== undefined ? settings.contrast : 1.0;
             mat.uDistortionStr = settings.distStr;
             mat.uFrequency = settings.freq;
             mat.uShapeMode = settings.shapeMode;
@@ -93,11 +101,10 @@ export async function generateStripSpritesheet(gl, scene, camera, materialRef, s
             mat.uTwist = settings.twist;
             mat.uSeed = settings.seed; 
             mat.uColor = new THREE.Color(settings.color);
+            mat.uFalloff = settings.falloff !== undefined ? settings.falloff : 1.0;
 
-            // 2. Espera um frame (Evita travar navegador e permite atualização de textura)
             await waitForNextFrame();
 
-            // 3. FORÇA O TAMANHO AGORA (Crucial: Sobrescreve qualquer resize automático do React)
             gl.setPixelRatio(1);
             gl.setSize(width, height);
             gl.setScissorTest(false);
@@ -105,13 +112,16 @@ export async function generateStripSpritesheet(gl, scene, camera, materialRef, s
             camera.aspect = 1;
             camera.updateProjectionMatrix();
 
-            // 4. Renderiza e Captura Imediatamente
             gl.render(scene, camera);
             ctx.drawImage(gl.domElement, 0, i * height, width, height);
         }
 
         const link = document.createElement('a');
-        link.download = `spritesheet-strip-${width}x${height * totalFrames}-${Date.now()}.png`;
+        
+        // Lógica de Nome
+        const cleanName = customName.trim() || `spritesheet`;
+        link.download = `${cleanName}-${width}x${height * totalFrames}.png`;
+        
         link.href = sheetCanvas.toDataURL('image/png');
         link.click();
 

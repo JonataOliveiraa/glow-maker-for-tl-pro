@@ -1,4 +1,4 @@
-# ✨ Terraria VFX Glow Creator
+# Glow Maker for TL Pro
 
 > **A ferramenta definitiva para criar efeitos visuais procedurais, partículas e projéteis mágicos para Mods de Terraria.**
 

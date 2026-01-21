@@ -2,7 +2,7 @@
 
 > **A ferramenta definitiva para criar efeitos visuais procedurais, partículas e projéteis mágicos para Mods de Terraria.**
 
-O **Terraria VFX Glow Creator** é uma aplicação web poderosa construída com **React Three Fiber** e **Shaders GLSL**, desenhada especificamente para *pixel artists* e *modders*. Esta ferramenta resolve o problema complexo de criar *sprites* de luz, auras mágicas e projéteis animados frame-a-frame manualmente, permitindo gerar *spritesheets* perfeitamente repetíveis (*loops*) ou caóticos em segundos.
+O **Glow Maker for TL Pro** é uma aplicação web poderosa construída com **React Three Fiber** e **Shaders GLSL**, desenhada especificamente para *pixel artists* e *modders*. Esta ferramenta resolve o problema complexo de criar *sprites* de luz, auras mágicas e projéteis animados frame-a-frame manualmente, permitindo gerar *spritesheets* perfeitamente repetíveis (*loops*) ou caóticos em segundos.
 
 ---
 
